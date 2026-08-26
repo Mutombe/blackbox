@@ -326,7 +326,7 @@ function setAuthSeg(s){authSeg=s;renderAuthCard();}
 function renderAuthCard(){
   var demo=authSeg==='staff'?ACCOUNTS[0]:ACCOUNTS[2];
   document.getElementById('bbxAuthCard').innerHTML='<button class="bbx-authmodal-x" onclick="BB.closeAuth()" aria-label="Close">'+svg(IC.x,16)+'</button>'+
-    '<div class="bbx-authmodal-brand"><span class="bbx-side-logo">B</span><span class="bbx-side-name" style="color:var(--ink)">Blackbox<small style="color:var(--text-soft)">Investments</small></span></div>'+
+    '<div class="bbx-authmodal-brand"><img class="bbx-authmodal-logo" src="assets/img/logo.png" alt="Blackbox Investments"></div>'+
     '<div class="bbx-seg"><button class="'+(authSeg==='customer'?'on':'')+'" onclick="BB.setAuthSeg(\'customer\')">'+svg(IC.user,15)+' Customer</button><button class="'+(authSeg==='staff'?'on':'')+'" onclick="BB.setAuthSeg(\'staff\')">'+svg(IC.board,15)+' Staff / Admin</button></div>'+
     '<h2 class="bbx-auth-t">'+(authSeg==='staff'?'Staff & admin sign-in':'Customer portal')+'</h2>'+
     '<p class="bbx-auth-p">'+(authSeg==='staff'?'Access the sales CRM and management dashboards.':'Track your RFQs, quotations and orders.')+'</p>'+
@@ -508,7 +508,7 @@ function renderShell(page){
   app.className='bbx-appwrap';
   app.innerHTML=
     '<aside class="bbx-side" id="bbxSide">'+
-      '<a class="bbx-side-brand" href="index.html"><span class="bbx-side-logo">B</span><span class="bbx-side-name">Blackbox<small>'+(page==='admin'?'Console':'Portal')+'</small></span></a>'+
+      '<a class="bbx-side-brand" href="index.html"><img class="bbx-side-logoimg" src="assets/img/logo-white.png" alt="Blackbox Investments"><span class="bbx-side-badge">'+(page==='admin'?'Console':'Portal')+'</span></a>'+
       '<nav class="bbx-side-nav">'+menu.map(function(m){return '<button class="bbx-side-item'+(m.k===view?' on':'')+'" data-k="'+m.k+'">'+svg(m.ic,18)+'<span>'+m.t+'</span></button>';}).join('')+'</nav>'+
       '<div class="bbx-side-foot">'+cart+
         '<a class="bbx-side-link" href="index.html">'+svg(IC.site,16)+' View website</a>'+

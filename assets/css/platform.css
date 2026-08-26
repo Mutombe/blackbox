@@ -54,6 +54,7 @@
 .bbx-profile-menu.open{ opacity:1; visibility:visible; transform:none; }
 .bbx-profile-head{ display:flex; align-items:center; gap:10px; padding:10px 10px 12px; border-bottom:1px solid var(--line); margin-bottom:6px; }
 .bbx-profile-head .bbx-av{ background:var(--ink); color:#fff; }
+.bbx-profile-btn .bbx-av,.bbx-profile-head .bbx-av{ border-radius:50%; }
 .bbx-profile-id{ min-width:0; }
 .bbx-profile-id b{ display:block; font-size:var(--fs-sm); }
 .bbx-profile-id small{ display:block; font-size:var(--fs-label); color:var(--text-soft); overflow:hidden; text-overflow:ellipsis; }
@@ -71,6 +72,8 @@
 .bbx-authmodal-x{ position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:var(--r-md); border:1px solid var(--line-2); background:#fff; color:var(--text-soft); display:grid; place-items:center; cursor:pointer; }
 .bbx-authmodal-x:hover{ color:var(--ink); border-color:var(--ink); }
 .bbx-authmodal-brand{ display:flex; align-items:center; gap:11px; margin-bottom:22px; }
+.bbx-authmodal-logo{ height:34px; width:auto; }
+.bbx-side-logoimg{ height:34px; width:auto; max-width:170px; }
 .site-header:not(.is-stuck):not(.nav-open) .bbx-acct-t b{ color:#fff; }
 .site-header:not(.is-stuck):not(.nav-open) .bbx-acct-t small{ color:var(--on-dark-soft); }
 @media (max-width:900px){ .bbx-acct-t{ display:none; } }
@@ -93,7 +96,7 @@
 @media (max-width:620px){ .bbx-catgrid{ grid-template-columns:1fr; } }
 .bbx-prod{ border:1px solid var(--line); border-radius:var(--r-lg); background:#fff; padding:20px; display:flex; flex-direction:column; cursor:pointer; transition:.2s var(--ease); }
 .bbx-prod:hover{ border-color:var(--line-2); box-shadow:0 16px 36px -22px rgba(30,35,41,.35); transform:translateY(-3px); }
-.bbx-prod-img{ height:132px; margin:-20px -20px 16px; background-size:cover; background-position:center; border-radius:var(--r-lg) var(--r-lg) 0 0; position:relative; }
+.bbx-prod-img{ height:184px; margin:-20px -20px 16px; background-size:cover; background-position:center; border-radius:var(--r-lg) var(--r-lg) 0 0; position:relative; }
 .bbx-prod-img::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(30,35,41,0) 40%,rgba(30,35,41,.18)); border-radius:inherit; }
 .bbx-prod-imgtag{ position:absolute; top:12px; right:12px; z-index:1; }
 .bbx-prod-img .bbx-avail{ background:rgba(255,255,255,.92); box-shadow:0 2px 8px -3px rgba(0,0,0,.4); }
@@ -110,8 +113,9 @@
 .bbx-prod-meta div:nth-child(3){ grid-column:1/-1; }
 .bbx-prod-meta dt{ font-family:var(--font-body); font-size:var(--fs-label); letter-spacing:.06em; text-transform:uppercase; color:var(--text-soft); }
 .bbx-prod-meta dd{ margin:2px 0 0; font-size:var(--fs-xs); font-weight:600; color:var(--ink); }
-.bbx-prod-act{ display:flex; gap:9px; margin-top:16px; }
-.bbx-prod-act .btn{ flex:1; justify-content:center; }
+.bbx-prod-act{ display:grid; grid-template-columns:1fr 1.35fr; gap:9px; margin-top:16px; }
+.bbx-prod-act .btn{ width:100%; justify-content:center; white-space:nowrap; min-height:44px; padding:10px 12px; font-size:var(--fs-xs); }
+@media (max-width:420px){ .bbx-prod-act{ grid-template-columns:1fr; } }
 .bbx-avail{ display:inline-flex; align-items:center; gap:6px; font-family:var(--font-body); font-size:var(--fs-label); font-weight:600; letter-spacing:.04em; padding:5px 10px; border-radius:100px; white-space:nowrap; }
 .bbx-avail::before{ content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
 .bbx-avail.in{ color:#1E874B; background:rgba(30,135,75,.1); }
@@ -288,6 +292,7 @@ body.bbx-appbody{ margin:0; background:var(--paper-2); }
 .bbx-side-logo{ width:34px; height:34px; border-radius:9px; background:var(--accent); color:var(--ink); display:grid; place-items:center; font-family:var(--font-display); font-weight:900; font-size:18px; flex-shrink:0; }
 .bbx-side-name{ font-family:var(--font-display); font-weight:800; font-size:18px; letter-spacing:var(--tr-title); line-height:1; }
 .bbx-side-name small{ display:block; font-family:var(--font-body); font-weight:500; font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--on-dark-soft); margin-top:3px; }
+.bbx-side-badge{ font-family:var(--font-body); font-size:10px; font-weight:600; letter-spacing:.14em; text-transform:uppercase; color:var(--on-dark-soft); border:1px solid rgba(255,255,255,.2); border-radius:100px; padding:3px 9px; }
 .bbx-side-nav{ flex:1; padding:14px 12px; display:flex; flex-direction:column; gap:2px; overflow-y:auto; }
 .bbx-side-item{ display:flex; align-items:center; gap:12px; padding:11px 14px; border:0; border-radius:9px; background:none; color:var(--on-dark-mid); font:inherit; font-size:14px; font-weight:500; cursor:pointer; text-align:left; width:100%; transition:.15s var(--ease); }
 .bbx-side-item svg{ opacity:.85; flex-shrink:0; }
