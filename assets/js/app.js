@@ -30,7 +30,12 @@ var IC = {
   board:'<rect x="3" y="4" width="5" height="16" rx="1"/><rect x="10" y="4" width="5" height="11" rx="1"/><rect x="17" y="4" width="4" height="14" rx="1"/>',
   pin:'<path d="M12 21s7-6 7-11a7 7 0 1 0-14 0c0 5 7 11 7 11z"/><circle cx="12" cy="10" r="2.4"/>',
   repeat:'<path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>',
-  ai:'<circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/>'
+  ai:'<circle cx="12" cy="12" r="3.2"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M6 6l2 2M16 16l2 2M18 6l-2 2M8 16l-2 2"/>',
+  grid:'<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>',
+  users:'<circle cx="9" cy="8" r="3"/><path d="M2.5 20c0-3 2.9-5 6.5-5s6.5 2 6.5 5"/><path d="M16.5 3.6a3 3 0 0 1 0 5.6M21.5 20c0-2.4-1.7-4.2-4.2-4.8"/>',
+  box:'<path d="M21 8 12 3 3 8v8l9 5 9-5z"/><path d="M3 8l9 5 9-5M12 13v8"/>',
+  site:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18"/>',
+  bell:'<path d="M6 9a6 6 0 0 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/>'
 };
 function svg(p,w){w=w||18;return '<svg viewBox="0 0 24 24" width="'+w+'" height="'+w+'" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>';}
 
@@ -209,10 +214,11 @@ var BB={
   adminTab:adminTab,pdQty:pdQty
 };
 BB.page=function(page){
-  mountHeader();
   if(!canSee(page)){location.href='signin.html?next='+encodeURIComponent(page)+(ACCESS[page]==='admin'?'&as=staff':'');return;}
+  if(page==='admin'||page==='portal'){renderShell(page);return;}
+  mountHeader();
   var root=document.getElementById('bbx-root');if(!root)return;
-  ({catalogue:renderCatalogue,rfq:renderRFQ,signin:renderSignin,portal:renderPortal,admin:renderAdmin}[page]||function(){})(root);
+  ({catalogue:renderCatalogue,rfq:renderRFQ,signin:renderSignin}[page]||function(){})(root);
 };
 window.BB=BB;
 
@@ -424,7 +430,149 @@ function topChem(){var m={};S.rfqs.forEach(function(r){r.lines.forEach(function(
   return data.map(function(d){return '<div class="bbx-bar"><span class="bbx-bar-n">'+d.p.name+'</span><span class="bbx-bar-t"><span class="bbx-bar-fill" data-w="'+Math.round(d.n/max*100)+'%"></span></span><span class="bbx-bar-v">'+d.n+' RFQ'+(d.n>1?'s':'')+'</span></div>';}).join('');}
 function insight(q,a){return '<div class="bbx-insight"><span class="bbx-ai">'+svg(IC.ai,15)+'</span><div><div class="bbx-iq">'+q+'</div><div class="bbx-ia">'+a+'</div></div></div>';}
 
+/* ================================================ APP SHELL (admin + portal) */
+var MENUS={
+  admin:[
+    {k:'overview',t:'Overview',ic:IC.grid},
+    {k:'pipeline',t:'Sales Pipeline',ic:IC.board},
+    {k:'quotations',t:'Quotations',ic:IC.doc},
+    {k:'orders',t:'Orders',ic:IC.truck},
+    {k:'customers',t:'Customers',ic:IC.users},
+    {k:'catalogue2',t:'Products',ic:IC.box},
+    {k:'sourcing',t:'Sourcing Requests',ic:IC.bolt},
+    {k:'reports',t:'Reports',ic:IC.chart}
+  ],
+  portal:[
+    {k:'overview',t:'Overview',ic:IC.grid},
+    {k:'rfqs',t:'My RFQs',ic:IC.doc},
+    {k:'quotations',t:'Quotations',ic:IC.file},
+    {k:'orders',t:'Orders',ic:IC.truck},
+    {k:'documents',t:'Documents',ic:IC.box}
+  ]
+};
+var TITLES={
+  overview:['Overview','Everything at a glance'],
+  pipeline:['Sales Pipeline','RFQs from enquiry to fulfilment'],
+  quotations:['Quotations','Prepared and sent quotes'],
+  orders:['Orders','Confirmed and in-transit'],
+  customers:['Customers','Accounts and activity'],
+  catalogue2:['Products','The material catalogue'],
+  sourcing:['Sourcing Requests','Materials to find'],
+  reports:['Reports & Intelligence','Performance across the business'],
+  rfqs:['My RFQs','Your requests for quotation'],
+  documents:['Documents','SDS, invoices & certificates']
+};
+BB.navTo=function(k){location.hash=k;};
+function renderShell(page){
+  var app=document.getElementById('bbx-app');if(!app)return;
+  var menu=MENUS[page];
+  var view=(location.hash||'').replace('#','')||menu[0].k;
+  if(!menu.some(function(m){return m.k===view;}))view=menu[0].k;
+  var cart=(page==='portal'?'<a class="bbx-side-cta" href="catalogue.html">'+svg(IC.plus,16)+' New RFQ</a>':'');
+  app.className='bbx-appwrap';
+  app.innerHTML=
+    '<aside class="bbx-side" id="bbxSide">'+
+      '<a class="bbx-side-brand" href="index.html"><span class="bbx-side-logo">B</span><span class="bbx-side-name">Blackbox<small>'+(page==='admin'?'Console':'Portal')+'</small></span></a>'+
+      '<nav class="bbx-side-nav">'+menu.map(function(m){return '<button class="bbx-side-item'+(m.k===view?' on':'')+'" data-k="'+m.k+'">'+svg(m.ic,18)+'<span>'+m.t+'</span></button>';}).join('')+'</nav>'+
+      '<div class="bbx-side-foot">'+cart+
+        '<a class="bbx-side-link" href="index.html">'+svg(IC.site,16)+' View website</a>'+
+        '<div class="bbx-side-user"><span class="bbx-av">'+SESSION.init+'</span><span class="bbx-acct-t"><b>'+SESSION.name+'</b><small>'+SESSION.sub+'</small></span><button class="bbx-side-out" title="Sign out" onclick="BB.signOut()">'+svg(IC.out,15)+'</button></div>'+
+      '</div>'+
+    '</aside>'+
+    '<div class="bbx-main2"><header class="bbx-vbar"><button class="bbx-side-toggle" onclick="document.getElementById(\'bbxSide\').classList.toggle(\'open\')">'+svg(IC.grid,18)+'</button><div id="bbx-vtitle"></div><a class="bbx-vbar-site" href="index.html">'+svg(IC.site,15)+' Website</a></header><div class="bbx-view" id="bbx-view"></div></div>';
+  [].forEach.call(app.querySelectorAll('.bbx-side-item'),function(b){b.addEventListener('click',function(){location.hash=b.getAttribute('data-k');var s=document.getElementById('bbxSide');if(s)s.classList.remove('open');});});
+  renderShellView(page,view);
+}
+function renderShellView(page,view){
+  var host=document.getElementById('bbx-view');if(!host)return;
+  var menu=MENUS[page];if(!menu.some(function(m){return m.k===view;}))view=menu[0].k;
+  [].forEach.call(document.querySelectorAll('.bbx-side-item'),function(b){b.classList.toggle('on',b.getAttribute('data-k')===view);});
+  var t=TITLES[view]||[view,''];var vt=document.getElementById('bbx-vtitle');if(vt)vt.innerHTML='<h1>'+t[0]+'</h1><p>'+t[1]+'</p>';
+  var views=(page==='admin'?ADMIN_VIEWS:PORTAL_VIEWS);
+  (views[view]||function(h){h.innerHTML='';})(host);
+  requestAnimationFrame(function(){[].forEach.call(document.querySelectorAll('.bbx-bar-fill'),function(f){f.style.width=f.getAttribute('data-w');});});
+}
+function boardHTML(){
+  return '<div class="bbx-board">'+STAGES.map(function(st){var items=S.rfqs.filter(function(r){return r.stage===st.k;});return '<div class="bbx-col"><div class="bbx-col-h"><span>'+st.t+'</span><span class="bbx-col-c">'+items.length+'</span></div><div class="bbx-col-b">'+
+    (items.map(function(r){var c=findC(r.cust);return '<div class="bbx-kc" onclick="BB.openRfqCard(\''+r.id+'\')"><div class="bbx-kc-r1"><span class="mono soft">'+r.id+'</span><span class="mono soft xs">'+r.created+'</span></div><h5>'+c.name+'</h5><span class="bbx-kc-cust">'+r.lines.length+' line'+(r.lines.length>1?'s':'')+' · '+findP(r.lines[0].sku).name+(r.lines.length>1?' +'+(r.lines.length-1):'')+'</span><div class="bbx-kc-r2"><span class="bbx-kc-val">'+money(rfqVal(r))+'</span>'+(r.rep?'<span class="bbx-kc-rep"><i>'+repInit(r.rep)+'</i>'+r.rep.split(' ')[0]+'</span>':'<span class="soft xs">Unassigned</span>')+'</div></div>';}).join('')||'<div class="bbx-col-e">—</div>')+
+    '</div></div>';}).join('')+'</div>';
+}
+/* ---- ADMIN views ---- */
+var ADMIN_VIEWS={
+  overview:function(h){
+    var pipeline=S.rfqs.filter(function(r){return r.stage!=='won';}).reduce(function(s,r){return s+rfqVal(r);},0);
+    var newToday=S.rfqs.filter(function(r){return ['just now','40m','2h','6h','8h'].indexOf(r.created)>=0;}).length;
+    var awaiting=S.orders.filter(function(o){return o.status==='fulfilling'||o.status==='transit';}).length;
+    var low=PRODUCTS.filter(function(p){return p.avail==='low';}).length;
+    h.innerHTML='<div class="bbx-tiles">'+tile('Open pipeline',money(pipeline),S.rfqs.length+' live RFQs')+tile('New RFQs today',newToday,'across all categories')+tile('Awaiting fulfilment',awaiting,'orders to dispatch')+tile('Low-stock products',low,'reorder required')+'</div>'+
+      '<div class="bbx-panels2">'+panelBars('Open pipeline by category',pipeByCat())+'<div class="bbx-panel"><h4>Top requested materials</h4>'+topChem()+'</div></div>'+
+      '<h3 class="bbx-h">Latest RFQs</h3>'+tableWrap(['RFQ','Customer','Products','Est. value','Stage','Owner'],S.rfqs.slice(0,7).map(function(r){var st=STAGES.filter(function(s){return s.k===r.stage;})[0];var c=findC(r.cust);return '<tr onclick="BB.openRfqCard(\''+r.id+'\')" style="cursor:pointer"><td class="mono">'+r.id+'</td><td><b>'+c.name+'</b></td><td>'+r.lines.length+' · '+findP(r.lines[0].sku).name+'</td><td class="num">'+money(rfqVal(r))+'</td><td><span class="bbx-stage">'+st.t+'</span></td><td class="soft">'+(r.rep?r.rep.split(' ')[0]:'—')+'</td></tr>';}));
+  },
+  pipeline:function(h){
+    var pipeline=S.rfqs.filter(function(r){return r.stage!=='won';}).reduce(function(s,r){return s+rfqVal(r);},0);
+    var won=S.rfqs.filter(function(r){return r.stage==='won'||r.stage==='fulfil';});var conv=Math.round(won.length/Math.max(1,S.rfqs.length)*100);
+    h.innerHTML='<div class="bbx-tiles">'+tile('Open pipeline',money(pipeline),S.rfqs.filter(function(r){return r.stage!=='won'&&r.stage!=='fulfil';}).length+' active')+tile('Won this month',money(won.reduce(function(s,r){return s+rfqVal(r);},0)),won.length+' orders')+tile('Conversion',conv+'%','RFQ → order')+tile('Avg. response','9 hr','quote turnaround')+'</div>'+boardHTML();
+  },
+  quotations:function(h){
+    h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Sent quotations</h3>'+(S.quotes.length?tableWrap(['Quote','Customer','From RFQ','Products','Total','Raised'],S.quotes.map(function(q){var t=quoteTotal(q);return '<tr onclick="BB.viewQuote(\''+q.id+'\')" style="cursor:pointer"><td class="mono">'+q.id+'</td><td><b>'+findC(q.cust).name+'</b></td><td class="mono soft">'+q.rfq+'</td><td>'+q.lines.map(function(l){return findP(l.sku).name;}).join(', ')+'</td><td class="num">'+money(t.total)+'</td><td class="soft mono">'+q.created+'</td></tr>';})):'<div class="bbx-card bbx-empty sm">No quotations sent yet — prepare one from the pipeline.</div>');
+  },
+  orders:function(h){
+    function chip(s){return s==='transit'?'<span class="bbx-avail in">In transit</span>':s==='fulfilling'?'<span class="bbx-avail low">Fulfilling</span>':'<span class="bbx-avail in">Delivered</span>';}
+    h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Orders</h3>'+tableWrap(['Order','Customer','Products','Value','Delivery','Status'],S.orders.map(function(o){var v=o.lines.reduce(function(s,l){return s+findP(l.sku).price*l.qty;},0);return '<tr><td class="mono">'+o.id+'</td><td><b>'+findC(o.cust).name+'</b></td><td>'+o.lines.map(function(l){return findP(l.sku).name+' <span class="mono soft">×'+l.qty+'</span>';}).join('<br>')+'</td><td class="num">'+money(v)+'</td><td class="soft">'+o.eta+'</td><td>'+chip(o.status)+'</td></tr>';}));
+  },
+  customers:function(h){
+    h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Customer directory</h3>'+tableWrap(['Customer','Sector','RFQs','Orders','Open pipeline'],CUST.map(function(c){var rfqs=S.rfqs.filter(function(r){return r.cust===c.id;});var ords=S.orders.filter(function(o){return o.cust===c.id;});var pv=rfqs.filter(function(r){return r.stage!=='won';}).reduce(function(s,r){return s+rfqVal(r);},0);return '<tr><td><span class="bbx-crow"><span class="bbx-crow-av">'+c.init+'</span><b>'+c.name+'</b></span></td><td class="soft">'+c.sector+'</td><td class="num">'+rfqs.length+'</td><td class="num">'+ords.length+'</td><td class="num">'+money(pv)+'</td></tr>';}));
+  },
+  catalogue2:function(h){
+    h.innerHTML='<div class="bbx-toolbar"><div class="bbx-count">'+PRODUCTS.length+' products · <a class="bbx-fine" style="text-decoration:underline" href="catalogue.html">open public catalogue →</a></div></div>'+
+      tableWrap(['SKU','Product','Category','From','Stock','Status'],PRODUCTS.map(function(p){return '<tr><td class="mono">'+p.sku+'</td><td><b>'+p.name+'</b> <span class="bbx-formula">'+p.formula+'</span></td><td class="soft">'+CATS[p.cat].name+'</td><td class="num">'+money2(p.price)+'/'+p.unit+'</td><td class="num">'+p.stock.toLocaleString()+' '+p.unit+'</td><td>'+availChip(p.avail)+'</td></tr>';}));
+  },
+  sourcing:function(h){
+    h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Sourcing requests</h3>'+(S.sourcing.length?tableWrap(['Ref','Customer','Material','Quantity','Grade / application','Location'],S.sourcing.map(function(s){return '<tr><td class="mono">'+s.id+'</td><td><b>'+findC(s.cust).name+'</b></td><td>'+s.chem+'</td><td>'+s.qty+'</td><td class="soft">'+s.app+'</td><td class="soft">'+s.loc+'</td></tr>';})):'<div class="bbx-card bbx-empty sm">No open sourcing requests. They arrive here when a customer uses “Request a material”.</div>');
+  },
+  reports:function(h){
+    h.innerHTML='<div class="bbx-panels2">'+panelBars('Pipeline by category',pipeByCat())+panelReps()+'</div>'+
+      '<div class="bbx-panels2">'+'<div class="bbx-panel"><h4>Top requested materials</h4>'+topChem()+'</div>'+'<div class="bbx-panel"><h4>Intelligence</h4>'+
+        insight('Which customers haven’t ordered in 90 days?','<b>Colcom Foods</b> and <b>PPC Zimbabwe</b> — both historically $40k+/quarter. Suggest a re-engagement call.')+
+        insight('Which quotations are most likely to close?','<b>QT-2291 (Harare Water)</b> — repeat buyer, priced in range, 82% predicted win.')+
+        insight('What’s repeatedly requested but out of stock?','<b>Anionic Flocculant</b> — 4 RFQs this month, currently low stock. Recommend restocking.')+
+      '</div></div>'+
+      '<div class="bbx-admin-foot"><button class="btn btn--line btn--sm" onclick="BB.resetDemo()">'+svg(IC.repeat,14)+' Reset demo data</button></div>';
+  }
+};
+/* ---- PORTAL views ---- */
+function myRfqs(){return S.rfqs.filter(function(r){return r.cust===SESSION.custId;});}
+function myQuotes(){return S.quotes.filter(function(q){return q.cust===SESSION.custId;});}
+function myOrders(){return S.orders.filter(function(o){return o.cust===SESSION.custId;});}
+var PORTAL_VIEWS={
+  overview:function(h){
+    var open=myRfqs().filter(function(r){return r.stage!=='won'&&r.stage!=='fulfil';}).length;
+    var trans=myOrders().filter(function(o){return o.status==='transit'||o.status==='fulfilling';}).length;
+    h.innerHTML='<div class="bbx-tiles">'+tile('Open RFQs',open,'awaiting quotation')+tile('Quotations',myQuotes().length,'awaiting your decision')+tile('Orders in transit',trans,'live deliveries')+tile('Documents',9,'SDS · invoices · certs')+'</div>'+
+      (myQuotes().length?'<h3 class="bbx-h">Quotations awaiting your decision</h3>'+PORTAL_VIEWS._quotesTable():'')+
+      '<h3 class="bbx-h">Recent activity</h3>'+tableWrap(['RFQ','Products','Est. value','Stage','Raised'],myRfqs().slice(0,6).map(function(r){var st=STAGES.filter(function(s){return s.k===r.stage;})[0];return '<tr><td class="mono">'+r.id+'</td><td>'+r.lines.length+' · '+r.lines.map(function(l){return findP(l.sku).name;}).slice(0,2).join(', ')+'</td><td class="num">'+money(rfqVal(r))+'</td><td><span class="bbx-stage">'+st.t+'</span></td><td class="soft mono">'+r.created+'</td></tr>';}));
+  },
+  rfqs:function(h){
+    h.innerHTML='<div class="bbx-toolbar"><div class="bbx-count">'+myRfqs().length+' RFQs</div><a class="btn btn--primary btn--sm" href="catalogue.html">'+svg(IC.plus,15)+' New RFQ</a></div>'+
+      tableWrap(['RFQ','Products','Est. value','Stage','Raised'],myRfqs().map(function(r){var st=STAGES.filter(function(s){return s.k===r.stage;})[0];return '<tr><td class="mono">'+r.id+'</td><td>'+r.lines.map(function(l){return findP(l.sku).name+' <span class="mono soft">×'+l.qty+'</span>';}).join('<br>')+'</td><td class="num">'+money(rfqVal(r))+'</td><td><span class="bbx-stage">'+st.t+'</span></td><td class="soft mono">'+r.created+'</td></tr>';}));
+  },
+  quotations:function(h){
+    h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Quotations</h3>'+(myQuotes().length?PORTAL_VIEWS._quotesTable():'<div class="bbx-card bbx-empty sm">No open quotations right now.</div>');
+  },
+  _quotesTable:function(){return tableWrap(['Quote','Products','Total','Status',''],myQuotes().map(function(q){var t=quoteTotal(q);return '<tr><td class="mono">'+q.id+'</td><td>'+q.lines.map(function(l){return findP(l.sku).name;}).join(', ')+'</td><td class="num">'+money(t.total)+'</td><td><span class="bbx-avail in">Received</span></td><td class="ar"><button class="btn btn--line btn--sm" onclick="BB.viewQuote(\''+q.id+'\')">View</button> <button class="btn btn--primary btn--sm" onclick="BB.acceptQuote(\''+q.id+'\')">Accept</button></td></tr>';}));},
+  orders:function(h){
+    function chip(s){return s==='transit'?'<span class="bbx-avail in">In transit</span>':s==='fulfilling'?'<span class="bbx-avail low">Fulfilling</span>':'<span class="bbx-avail in">Delivered</span>';}
+    h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Orders</h3>'+tableWrap(['Order','Products','Value','Delivery','Status',''],myOrders().map(function(o){var v=o.lines.reduce(function(s,l){return s+findP(l.sku).price*l.qty;},0);return '<tr><td class="mono">'+o.id+'</td><td>'+o.lines.map(function(l){return findP(l.sku).name+' <span class="mono soft">×'+l.qty+'</span>';}).join('<br>')+'</td><td class="num">'+money(v)+'</td><td class="soft">'+o.eta+'</td><td>'+chip(o.status)+'</td><td class="ar"><button class="btn btn--line btn--sm" onclick="BB.reorder(\''+o.id+'\')">'+svg(IC.repeat,13)+' Re-order</button></td></tr>';}));
+  },
+  documents:function(h){
+    var docs=[];myOrders().forEach(function(o){docs.push({t:'Invoice '+o.id,s:findC(o.cust).name+' · '+o.created,k:'Invoice'});o.lines.forEach(function(l){docs.push({t:'SDS — '+findP(l.sku).name,s:findP(l.sku).sku+' · Rev 4',k:'SDS'});});});
+    var seen={};docs=docs.filter(function(d){if(seen[d.t])return false;seen[d.t]=1;return true;});
+    h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Documents</h3><div class="bbx-doclist">'+docs.map(function(d){return '<div class="bbx-doc"><span class="bbx-doc-ic">'+svg(IC.file,18)+'</span><div class="bbx-doc-t"><b>'+d.t+'</b><span>'+d.s+'</span></div><span class="bbx-doc-k">'+d.k+'</span><button class="btn btn--line btn--sm" onclick="BB.toast(\'Download started (demo)\')">Download</button></div>';}).join('')+'</div>';
+  }
+};
+
 /* ------------------------------------------------ boot */
-document.addEventListener('DOMContentLoaded',function(){var p=document.body.getAttribute('data-page');mountHeader();if(document.getElementById('bbx-root')&&p)BB.page(p);});
+document.addEventListener('DOMContentLoaded',function(){var p=document.body.getAttribute('data-page');mountHeader();if(p&&(p==='admin'||p==='portal'||document.getElementById('bbx-root')))BB.page(p);});
+window.addEventListener('hashchange',function(){var p=document.body.getAttribute('data-page');if((p==='admin'||p==='portal')&&document.getElementById('bbx-view'))renderShellView(p,(location.hash||'').replace('#',''));});
 mountHeader();
 })();
