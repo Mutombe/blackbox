@@ -21,9 +21,13 @@ python -m http.server 8000
 | `process.html` | The four fulfilment steps expanded, and what ships with every order |
 | `contact.html` | Contact details, enquiry form, what to include |
 
-Every home-page section links through to its detail page. Header and footer
-markup is duplicated across the files (the trade-off for having no build step) —
-if you change the nav, change it in all seven.
+Every home-page section links through to its detail page.
+
+The seven HTML files are **generated** by `tools/build_pages.py`, which holds the
+shared header/footer and all page copy in one place. Run `python tools/build_pages.py`
+from anywhere to rewrite them. You can also edit the HTML directly — just know
+that re-running the generator overwrites it, so put lasting changes in the
+generator.
 
 ## Structure
 
@@ -43,16 +47,23 @@ assets/img/           logo (black + white) and photography
 | `--ink` | `#0B1017` | dark sections, footer, primary buttons |
 | `--paper` | `#F5F3EF` | page background |
 | `--accent` | `#1B62E8` | eyebrow dots, CTAs, active states |
+| `--accent-lt` | `#7FA8FF` | emphasised words on dark backgrounds |
 | `--r-sm / md / lg / xl` | `4 / 8 / 10 / 12px` | the small-corner "premium" radii |
-| `--shell` | `1240px` | content max width |
+| `--shell` | `1300px` | content max width |
 
 Corners are deliberately tight across the whole system, buttons included. If you
 ever want the pill buttons back, it is one line — set `border-radius:100px` on
 `.btn`.
 
 Typeface is **Plus Jakarta Sans** (Google Fonts), matching the geometric
-grotesque in the supplied Framer / Synthorix references. Headings use weight
-500–600 with a heavier `<em>` for the emphasised phrase, as in the references.
+grotesque in the supplied Framer / Synthorix references.
+
+The type is set bold and tight throughout — headings at weight 700 with
+`-0.042em` tracking, the emphasised `<em>` at 800 in the accent blue. Body copy
+sits at 17px. Structural rules are 2px solid ink rather than hairlines, and
+section rhythm runs on `--sec-y` (88–168px). That combination is what carries the
+bold / clean / authoritative reading; if anything ever feels too loud, the two
+dials are heading weight and `--accent`.
 
 ## Before this goes live
 
