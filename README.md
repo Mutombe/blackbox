@@ -44,9 +44,9 @@ assets/img/           logo (black + white) and photography
 
 | Token | Value | Used for |
 |---|---|---|
-| `--ink` | `#0B1017` | dark sections, footer, primary buttons |
-| `--paper` | `#F5F3EF` | page background |
-| `--accent` | `#1B62E8` | eyebrow dots, CTAs, active states |
+| `--ink` | `#080C12` | dark sections, footer, primary buttons |
+| `--paper` | `#F4F2ED` | page background |
+| `--accent` | `#1B5CE8` | eyebrow dots, CTAs, active states |
 | `--accent-lt` | `#7FA8FF` | emphasised words on dark backgrounds |
 | `--r-sm / md / lg / xl` | `4 / 8 / 10 / 12px` | the small-corner "premium" radii |
 | `--shell` | `1300px` | content max width |
