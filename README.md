@@ -44,12 +44,29 @@ assets/img/           logo (black + white) and photography
 
 | Token | Value | Used for |
 |---|---|---|
-| `--ink` | `#080C12` | dark sections, footer, primary buttons |
-| `--paper` | `#F4F2ED` | page background |
-| `--accent` | `#1B5CE8` | eyebrow dots, CTAs, active states |
-| `--accent-lt` | `#7FA8FF` | emphasised words on dark backgrounds |
+| `--ink` | `#1E2329` | dark sections, footer, borders, button labels |
+| `--ink-2` | `#2A2F35` | raised state on dark |
+| `--ink-3` | `#3B4046` | muted rules on dark |
+| `--paper` | `#FFFFFF` | **the overall page ground** |
+| `--paper-2` | `#F6F5F2` | faint tint for alternating sections |
+| `--paper-3` | `#EDEBE6` | inset / image placeholder |
+| `--accent` | `#F5B402` | mustard, for **fills** (buttons, icon chips, dots) |
+| `--accent-dk` | `#F6A403` | deeper amber, hover |
+| `--accent-lt` | `#FED255` | light mustard, **on dark only** |
+| `--accent-ink` | `#8A5D00` | deep amber for accented **text on light** |
 | `--r-sm / md / lg / xl` | `4 / 8 / 10 / 12px` | the small-corner "premium" radii |
 | `--shell` | `1300px` | content max width |
+
+Charcoal and mustard, sampled from the supplied scheme (Colour Palette 145).
+White is the overall ground, as specified; `--paper-2` gives a faint alternation
+so white cards still read against the sections that hold them.
+
+**The one rule that matters:** mustard is a *fill*, not a text colour. `#F5B402`
+on white measures about **1.8:1** and fails badly. So mustard fills buttons and
+chips with `--ink` text on top (8.6:1), and any accented text on a light
+background uses `--accent-ink` instead (5.8:1). On dark backgrounds
+`--accent-lt` is free to carry text (11:1). Every pair in the palette was
+measured; the full set passes WCAG AA.
 
 Corners are deliberately tight across the whole system, buttons included. If you
 ever want the pill buttons back, it is one line — set `border-radius:100px` on
@@ -105,6 +122,18 @@ display sizes; small uppercase labels take *positive* tracking (`--tr-label`
 1.0–1.25, and negative tracking only where type is genuinely large.
 
 If anything ever feels too loud, the two dials are heading weight and `--accent`.
+
+### Copy
+
+House style: **no em-dashes or en-dashes anywhere** (all seven pages measure
+zero). Where a dash would have gone, the sentence is either split in two or
+rejoined with a comma or colon.
+
+Also deliberately avoided, because they read as machine-written: three-item
+parallel lists ("not a queue, a ticket number, or a call-back tomorrow"),
+mirrored constructions ("sourced globally, stocked locally"), and paragraphs
+where every sentence runs the same length. Sentence length is varied on purpose,
+including some deliberately short ones. Keep to this if you edit the copy.
 
 ### Patterns
 
