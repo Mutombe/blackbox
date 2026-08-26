@@ -64,6 +64,13 @@
 @media (max-width:620px){ .bbx-catgrid{ grid-template-columns:1fr; } }
 .bbx-prod{ border:1px solid var(--line); border-radius:var(--r-lg); background:#fff; padding:20px; display:flex; flex-direction:column; cursor:pointer; transition:.2s var(--ease); }
 .bbx-prod:hover{ border-color:var(--line-2); box-shadow:0 16px 36px -22px rgba(30,35,41,.35); transform:translateY(-3px); }
+.bbx-prod-img{ height:132px; margin:-20px -20px 16px; background-size:cover; background-position:center; border-radius:var(--r-lg) var(--r-lg) 0 0; position:relative; }
+.bbx-prod-img::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,rgba(30,35,41,0) 40%,rgba(30,35,41,.18)); border-radius:inherit; }
+.bbx-prod-imgtag{ position:absolute; top:12px; right:12px; z-index:1; }
+.bbx-prod-img .bbx-avail{ background:rgba(255,255,255,.92); box-shadow:0 2px 8px -3px rgba(0,0,0,.4); }
+.bbx-dr-img{ height:186px; margin:-22px -22px 22px; background-size:cover; background-position:center; }
+.bbx-lost{ display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 0; border-bottom:1px solid var(--line); }
+.bbx-lost:last-child{ border-bottom:0; }
 .bbx-prod-h{ display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
 .bbx-sku{ font-family:var(--font-body); font-size:var(--fs-label); letter-spacing:.04em; color:var(--text-soft); }
 .bbx-prod h3{ font-family:var(--font-display); font-weight:700; font-size:var(--fs-lg); letter-spacing:var(--tr-title); margin:2px 0 3px; line-height:1.15; }

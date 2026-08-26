@@ -41,12 +41,12 @@ function svg(p,w){w=w||18;return '<svg viewBox="0 0 24 24" width="'+w+'" height=
 
 /* ------------------------------------------------ data */
 var CATS = {
-  industrial:{name:'Industrial Chemicals'},
-  detergent:{name:'Detergent & Cleaning'},
-  food:{name:'Food & Beverage'},
-  polymers:{name:'Polymers & Plastics'},
-  paints:{name:'Paints & Coatings'},
-  mining:{name:'Mining & Water Treatment'}
+  industrial:{name:'Industrial Chemicals',img:'assets/img/drums-flammable.jpg'},
+  detergent:{name:'Detergent & Cleaning',img:'assets/img/jerrycans-white.jpg'},
+  food:{name:'Food & Beverage',img:'assets/img/lab-tubes.jpg'},
+  polymers:{name:'Polymers & Plastics',img:'assets/img/barrels-black.jpg'},
+  paints:{name:'Paints & Coatings',img:'assets/img/drums-mixed.jpg'},
+  mining:{name:'Mining & Water Treatment',img:'assets/img/hazmat-pair.jpg'}
 };
 var CK = Object.keys(CATS);
 
@@ -80,7 +80,8 @@ var RAW = [
  ['MIN-605','Calcium Hypochlorite 70%','Ca(OCl)₂','mining','Chlorination',3400,'t',['45 kg drums'],'in',40,['Potable disinfection','Pools','Effluent'],{'CAS No':'7778-54-3','Available Cl':'70%','Form':'Granular','Hazard':'UN 2880'}]
 ];
 var PRODUCTS = RAW.map(function(r){return {sku:r[0],name:r[1],formula:r[2],cat:r[3],app:r[4],price:r[5],unit:r[6],packs:r[7],avail:r[8],stock:r[9],apps:r[10],specs:r[11]};});
-function findP(sku){for(var i=0;i<PRODUCTS.length;i++)if(PRODUCTS[i].sku===sku)return PRODUCTS[i];}
+function findP(sku){for(var i=0;i<PRODUCTS.length;i++)if(PRODUCTS[i].sku===sku)return PRODUCTS[i];
+  return {sku:sku,name:sku||'Unknown item',formula:'',cat:'industrial',app:'',price:0,unit:'unit',packs:['—'],avail:'req',stock:0,apps:[],specs:{}};}
 
 var CUST = [
   {id:'delta',name:'Delta Beverages',sector:'Beverages',init:'DB'},
@@ -97,8 +98,10 @@ var REPS = ['Tendai Moyo','Rutendo Chikafu','Blessing Ncube','Farai Dube'];
 function repInit(n){return n.split(' ').map(function(x){return x[0];}).join('');}
 var STAGES = [
   {k:'new',t:'New RFQ'},{k:'assigned',t:'Assigned'},{k:'quoted',t:'Quoted'},
-  {k:'nego',t:'Negotiation'},{k:'won',t:'Won'},{k:'fulfil',t:'Fulfilment'}
+  {k:'nego',t:'Negotiation'},{k:'won',t:'Won'},{k:'fulfil',t:'Fulfilment'},{k:'lost',t:'Lost'}
 ];
+var OPEN_STAGES=['new','assigned','quoted','nego'];
+function isOpen(r){return OPEN_STAGES.indexOf(r.stage)>=0;}
 
 /* ------------------------------------------------ money */
 function money(n){return '$'+Math.round(n).toLocaleString('en-US');}
@@ -108,7 +111,7 @@ function uid(p){return p+'-'+Math.random().toString(36).slice(2,6).toUpperCase()
 function rfqVal(r){return r.lines.reduce(function(s,l){return s+findP(l.sku).price*l.qty;},0);}
 
 /* ------------------------------------------------ state */
-var KEY='bbx.state.v1', SKEY='bbx.session.v1', S, SESSION=null;
+var KEY='bbx.state.v2', SKEY='bbx.session.v1', S, SESSION=null;
 function seedState(){
   function mk(id,cust,rep,stage,lines,day){return {id:id,cust:cust,rep:rep,stage:stage,lines:lines,created:day,type:'catalogue'};}
   return {
@@ -121,7 +124,9 @@ function seedState(){
       mk('RFQ-4842','dairibord','Tendai Moyo','assigned',[{sku:'IND-105',qty:10},{sku:'FOO-303',qty:6}],'6h'),
       mk('RFQ-4845','natfoods','Rutendo Chikafu','quoted',[{sku:'FOO-301',qty:18},{sku:'FOO-304',qty:1}],'8h'),
       mk('RFQ-4848','colcom','Blessing Ncube','new',[{sku:'IND-105',qty:6},{sku:'FOO-302',qty:4}],'2h'),
-      mk('RFQ-4851','ppc','Farai Dube','new',[{sku:'MIN-602',qty:40},{sku:'IND-102',qty:25}],'40m')
+      mk('RFQ-4851','ppc','Farai Dube','new',[{sku:'MIN-602',qty:40},{sku:'IND-102',qty:25}],'40m'),
+      mk('RFQ-4809','astra','Farai Dube','lost',[{sku:'PNT-502',qty:18}],'6d'),
+      mk('RFQ-4812','colcom','Tendai Moyo','lost',[{sku:'FOO-303',qty:10},{sku:'IND-201',qty:5}],'9d')
     ],
     quotes:[
       {id:'QT-2291',rfq:'RFQ-4835',cust:'hararewater',lines:[{sku:'MIN-601',qty:30},{sku:'MIN-605',qty:4}],delivery:1200,disc:4,created:'1d'},
@@ -211,7 +216,7 @@ var BB={
   submitRFQ:submitRFQ,submitSourcing:submitSourcing,doSignIn:doSignIn,setAuthSeg:setAuthSeg,
   viewQuote:viewQuote,acceptQuote:acceptQuote,reorder:reorder,openRfqCard:openRfqCard,
   assignRfq:assignRfq,advanceRfq:advanceRfq,buildQuote:buildQuote,recalcQuote:recalcQuote,sendQuote:sendQuote,
-  adminTab:adminTab,pdQty:pdQty
+  markLost:markLost,pdQty:pdQty
 };
 BB.page=function(page){
   if(!canSee(page)){location.href='signin.html?next='+encodeURIComponent(page)+(ACCESS[page]==='admin'?'&as=staff':'');return;}
@@ -236,7 +241,8 @@ function renderCatalogue(root){
     CK.map(function(k){return '<button class="'+(catCat===k?'on':'')+'" onclick="BB.filterCat(\''+k+'\')">'+CATS[k].name+'</button>';}).join('')+'</div>'+
   '<div class="bbx-catgrid">'+(list.map(function(p){return ''+
     '<article class="bbx-prod" onclick="BB.openProduct(\''+p.sku+'\')">'+
-      '<div class="bbx-prod-h"><div><span class="bbx-sku">'+p.sku+'</span><h3>'+p.name+'</h3><span class="bbx-formula">'+p.formula+'</span></div>'+availChip(p.avail)+'</div>'+
+      '<div class="bbx-prod-img" style="background-image:url('+CATS[p.cat].img+')"><span class="bbx-prod-imgtag">'+availChip(p.avail)+'</span></div>'+
+      '<div class="bbx-prod-h"><div><span class="bbx-sku">'+p.sku+'</span><h3>'+p.name+'</h3><span class="bbx-formula">'+p.formula+'</span></div></div>'+
       catTag(p.cat)+
       '<dl class="bbx-prod-meta"><div><dt>From</dt><dd>'+money2(p.price)+'/'+p.unit+'</dd></div>'+
         '<div><dt>Packaging</dt><dd>'+p.packs[0]+'</dd></div>'+
@@ -253,6 +259,7 @@ function openProduct(sku){
   drawer(''+
     '<div class="bbx-dr-h"><div>'+catTag(p.cat)+'<h3>'+p.name+'</h3><span class="bbx-formula lg">'+p.formula+' · '+p.sku+'</span></div><button class="bbx-x" onclick="BB.closeDrawer()">'+svg(IC.x,16)+'</button></div>'+
     '<div class="bbx-dr-b">'+
+      '<div class="bbx-dr-img" style="background-image:url('+CATS[p.cat].img+')"></div>'+
       '<div class="bbx-chips">'+availChip(p.avail)+'<span class="bbx-chip">≈ '+money2(p.price)+' / '+p.unit+'</span><span class="bbx-chip">'+p.stock.toLocaleString()+' '+p.unit+' on hand</span></div>'+
       '<div class="bbx-blab">Technical specification</div><table class="bbx-spec">'+Object.keys(p.specs).map(function(k){return '<tr><td>'+k+'</td><td>'+p.specs[k]+'</td></tr>';}).join('')+'</table>'+
       '<div class="bbx-blab">Applications</div><div class="bbx-apps">'+p.apps.map(function(a){return '<span>'+a+'</span>';}).join('')+'</div>'+
@@ -382,10 +389,11 @@ function openRfqCard(id){var r=S.rfqs.filter(function(x){return x.id===id;})[0];
     (r.loc?'<p class="bbx-note">'+svg(IC.pin,14)+' Deliver to '+r.loc+'</p>':'')+(r.note?'<p class="bbx-note it">"'+r.note+'"</p>':'')+
     '<div class="bbx-blab">Requested products</div>'+tableWrap(['Product','Qty','Line est.'],r.lines.map(function(l){var p=findP(l.sku);return '<tr><td><b>'+p.name+'</b> <span class="mono soft">'+p.sku+'</span></td><td class="num">'+l.qty+' '+p.unit+'</td><td class="num">'+money(p.price*l.qty)+'</td></tr>';}))+
     (!r.rep?'<div class="bbx-blab">Assign salesperson</div><select class="bbx-inp" id="bbxAssign">'+REPS.map(function(x){return '<option>'+x+'</option>';}).join('')+'</select>':'')+'</div>'+
-    '<div class="bbx-dr-f">'+((r.stage==='quoted'||r.stage==='nego')?'<button class="btn btn--line" onclick="BB.buildQuote(\''+r.id+'\')">'+svg(IC.doc,16)+' Re-quote</button>':'')+
+    '<div class="bbx-dr-f">'+(isOpen(r)?'<button class="btn btn--line" onclick="BB.markLost(\''+r.id+'\')">Mark lost</button>':'')+((r.stage==='quoted'||r.stage==='nego')?'<button class="btn btn--line" onclick="BB.buildQuote(\''+r.id+'\')">'+svg(IC.doc,16)+' Re-quote</button>':'')+
       ((r.stage==='new'||r.stage==='assigned')?'<button class="btn btn--primary btn--block" onclick="'+(r.stage==='new'?'BB.assignRfq(\''+r.id+'\')':'BB.buildQuote(\''+r.id+'\')')+'">'+(r.stage==='new'?'Assign':svg(IC.doc,16)+' Prepare quote')+'</button>':(next?'<button class="btn btn--primary btn--block" onclick="BB.advanceRfq(\''+r.id+'\')">'+svg(IC.arrow,16)+' Move to '+next.t+'</button>':''))+'</div>');}
 function assignRfq(id){var r=S.rfqs.filter(function(x){return x.id===id;})[0];r.rep=document.getElementById('bbxAssign').value;r.stage='assigned';saveState();closeDrawer();toast(id+' assigned to '+r.rep,IC.check);BB.page('admin');}
-function advanceRfq(id){var r=S.rfqs.filter(function(x){return x.id===id;})[0];var i=STAGES.map(function(s){return s.k;}).indexOf(r.stage);if(STAGES[i+1]){r.stage=STAGES[i+1].k;saveState();closeDrawer();toast(id+' → '+STAGES[i+1].t,IC.arrow);BB.page('admin');}}
+function advanceRfq(id){var r=S.rfqs.filter(function(x){return x.id===id;})[0];var i=STAGES.map(function(s){return s.k;}).indexOf(r.stage);var nx=STAGES[i+1];if(nx&&nx.k!=='lost'){r.stage=nx.k;saveState();closeDrawer();toast(id+' → '+nx.t,IC.arrow);BB.page('admin');}}
+function markLost(id){var r=S.rfqs.filter(function(x){return x.id===id;})[0];r.stage='lost';saveState();closeDrawer();toast(id+' marked as lost',IC.x);BB.page('admin');}
 function buildQuote(id){var r=S.rfqs.filter(function(x){return x.id===id;})[0];var c=findC(r.cust);
   drawer('<div class="bbx-dr-h"><div><span class="bbx-cattag">Prepare quotation · '+r.id+'</span><h3>'+c.name+'</h3></div><button class="bbx-x" onclick="BB.closeDrawer()">'+svg(IC.x,16)+'</button></div>'+
     '<div class="bbx-dr-b"><div class="bbx-blab">Line items & pricing</div>'+r.lines.map(function(l){var p=findP(l.sku);return '<div class="bbx-pack col"><div class="bbx-pack-r"><b>'+p.name+'</b><span class="mono soft">'+l.qty+' '+p.unit+'</span></div><div class="bbx-pack-r"><span class="mono soft">Unit $</span><input class="bbx-inp qUnit" data-sku="'+l.sku+'" data-qty="'+l.qty+'" value="'+p.price+'" oninput="BB.recalcQuote()"><span class="mono qLine">'+money(p.price*l.qty)+'</span></div></div>';}).join('')+
@@ -420,7 +428,7 @@ function renderMgmt(root){
 /* ------------------------------------------------ shared widgets */
 function tile(lab,val,sub){return '<div class="bbx-tile"><div class="bbx-tile-l">'+lab+'</div><div class="bbx-tile-v">'+val+'</div><div class="bbx-tile-s">'+sub+'</div></div>';}
 function tableWrap(head,rows){return '<div class="bbx-tblwrap"><table class="bbx-tbl"><thead><tr>'+head.map(function(h){return '<th'+(h==='Total'||h==='Value'||h==='Est. value'||h==='Line'||h==='Line est.'||h==='Qty'||h==='Unit'?' class="num"':'')+'>'+h+'</th>';}).join('')+'</tr></thead><tbody>'+(rows.join('')||'')+'</tbody></table></div>';}
-function pipeByCat(){var m={};CK.forEach(function(k){m[k]=0;});S.rfqs.filter(function(r){return r.stage!=='won';}).forEach(function(r){r.lines.forEach(function(l){var p=findP(l.sku);m[p.cat]+=p.price*l.qty;});});
+function pipeByCat(){var m={};CK.forEach(function(k){m[k]=0;});S.rfqs.filter(isOpen).forEach(function(r){r.lines.forEach(function(l){var p=findP(l.sku);m[p.cat]+=p.price*l.qty;});});
   return CK.map(function(k){return {name:CATS[k].name,v:m[k]};}).filter(function(d){return d.v>0;}).sort(function(a,b){return b.v-a.v;});}
 function panelBars(title,data){var max=Math.max.apply(null,data.map(function(d){return d.v;}).concat([1]));var tot=data.reduce(function(s,d){return s+d.v;},0);
   return '<div class="bbx-panel"><div class="bbx-panel-h"><h4>'+title+'</h4><span class="mono soft">'+money(tot)+'</span></div>'+data.map(function(d){return '<div class="bbx-bar"><span class="bbx-bar-n">'+d.name+'</span><span class="bbx-bar-t"><span class="bbx-bar-fill" data-w="'+Math.round(d.v/max*100)+'%"></span></span><span class="bbx-bar-v">'+money(d.v)+'</span></div>';}).join('')+'</div>';}
@@ -429,6 +437,20 @@ function panelReps(){var m={};REPS.forEach(function(r){m[r]=0;});S.rfqs.forEach(
 function topChem(){var m={};S.rfqs.forEach(function(r){r.lines.forEach(function(l){m[l.sku]=(m[l.sku]||0)+1;});});var data=Object.keys(m).map(function(sku){return {p:findP(sku),n:m[sku]};}).sort(function(a,b){return b.n-a.n;}).slice(0,6);var max=Math.max.apply(null,data.map(function(d){return d.n;}).concat([1]));
   return data.map(function(d){return '<div class="bbx-bar"><span class="bbx-bar-n">'+d.p.name+'</span><span class="bbx-bar-t"><span class="bbx-bar-fill" data-w="'+Math.round(d.n/max*100)+'%"></span></span><span class="bbx-bar-v">'+d.n+' RFQ'+(d.n>1?'s':'')+'</span></div>';}).join('');}
 function insight(q,a){return '<div class="bbx-insight"><span class="bbx-ai">'+svg(IC.ai,15)+'</span><div><div class="bbx-iq">'+q+'</div><div class="bbx-ia">'+a+'</div></div></div>';}
+function panelHiVal(){
+  var m={};CUST.forEach(function(c){m[c.id]=0;});
+  S.orders.forEach(function(o){o.lines.forEach(function(l){m[o.cust]+=findP(l.sku).price*l.qty;});});
+  S.rfqs.filter(isOpen).forEach(function(r){m[r.cust]+=rfqVal(r);});
+  var data=CUST.map(function(c){return {name:c.name,v:m[c.id]};}).filter(function(d){return d.v>0;}).sort(function(a,b){return b.v-a.v;}).slice(0,6);
+  var max=Math.max.apply(null,data.map(function(d){return d.v;}).concat([1]));
+  return '<div class="bbx-panel"><div class="bbx-panel-h"><h4>High-value customers</h4><span class="mono soft">orders + pipeline</span></div>'+data.map(function(d){return '<div class="bbx-bar"><span class="bbx-bar-n">'+d.name+'</span><span class="bbx-bar-t"><span class="bbx-bar-fill" data-w="'+Math.round(d.v/max*100)+'%"></span></span><span class="bbx-bar-v">'+money(d.v)+'</span></div>';}).join('')+'</div>';
+}
+function panelLost(){
+  var lost=S.rfqs.filter(function(r){return r.stage==='lost';});
+  var tot=lost.reduce(function(s,r){return s+rfqVal(r);},0);
+  return '<div class="bbx-panel"><div class="bbx-panel-h"><h4>Lost opportunities</h4><span class="mono soft">'+money(tot)+'</span></div>'+
+    (lost.length?lost.map(function(r){return '<div class="bbx-lost"><div><b>'+findC(r.cust).name+'</b><span class="mono soft"> · '+r.id+'</span><div class="soft xs">'+r.lines.map(function(l){return findP(l.sku).name;}).join(', ')+'</div></div><span class="bbx-bar-v">'+money(rfqVal(r))+'</span></div>';}).join(''):'<p class="soft xs">No lost opportunities.</p>')+'</div>';
+}
 
 /* ================================================ APP SHELL (admin + portal) */
 var MENUS={
@@ -489,7 +511,8 @@ function renderShellView(page,view){
   [].forEach.call(document.querySelectorAll('.bbx-side-item'),function(b){b.classList.toggle('on',b.getAttribute('data-k')===view);});
   var t=TITLES[view]||[view,''];var vt=document.getElementById('bbx-vtitle');if(vt)vt.innerHTML='<h1>'+t[0]+'</h1><p>'+t[1]+'</p>';
   var views=(page==='admin'?ADMIN_VIEWS:PORTAL_VIEWS);
-  (views[view]||function(h){h.innerHTML='';})(host);
+  try{ (views[view]||function(h){h.innerHTML='';})(host); }
+  catch(e){ host.innerHTML='<div class="bbx-card bbx-empty sm">This view couldn’t load. <button class="btn btn--line btn--sm" onclick="BB.resetDemo()">Reset demo data</button></div>'; }
   requestAnimationFrame(function(){[].forEach.call(document.querySelectorAll('.bbx-bar-fill'),function(f){f.style.width=f.getAttribute('data-w');});});
 }
 function boardHTML(){
@@ -500,7 +523,7 @@ function boardHTML(){
 /* ---- ADMIN views ---- */
 var ADMIN_VIEWS={
   overview:function(h){
-    var pipeline=S.rfqs.filter(function(r){return r.stage!=='won';}).reduce(function(s,r){return s+rfqVal(r);},0);
+    var pipeline=S.rfqs.filter(isOpen).reduce(function(s,r){return s+rfqVal(r);},0);
     var newToday=S.rfqs.filter(function(r){return ['just now','40m','2h','6h','8h'].indexOf(r.created)>=0;}).length;
     var awaiting=S.orders.filter(function(o){return o.status==='fulfilling'||o.status==='transit';}).length;
     var low=PRODUCTS.filter(function(p){return p.avail==='low';}).length;
@@ -509,9 +532,11 @@ var ADMIN_VIEWS={
       '<h3 class="bbx-h">Latest RFQs</h3>'+tableWrap(['RFQ','Customer','Products','Est. value','Stage','Owner'],S.rfqs.slice(0,7).map(function(r){var st=STAGES.filter(function(s){return s.k===r.stage;})[0];var c=findC(r.cust);return '<tr onclick="BB.openRfqCard(\''+r.id+'\')" style="cursor:pointer"><td class="mono">'+r.id+'</td><td><b>'+c.name+'</b></td><td>'+r.lines.length+' · '+findP(r.lines[0].sku).name+'</td><td class="num">'+money(rfqVal(r))+'</td><td><span class="bbx-stage">'+st.t+'</span></td><td class="soft">'+(r.rep?r.rep.split(' ')[0]:'—')+'</td></tr>';}));
   },
   pipeline:function(h){
-    var pipeline=S.rfqs.filter(function(r){return r.stage!=='won';}).reduce(function(s,r){return s+rfqVal(r);},0);
-    var won=S.rfqs.filter(function(r){return r.stage==='won'||r.stage==='fulfil';});var conv=Math.round(won.length/Math.max(1,S.rfqs.length)*100);
-    h.innerHTML='<div class="bbx-tiles">'+tile('Open pipeline',money(pipeline),S.rfqs.filter(function(r){return r.stage!=='won'&&r.stage!=='fulfil';}).length+' active')+tile('Won this month',money(won.reduce(function(s,r){return s+rfqVal(r);},0)),won.length+' orders')+tile('Conversion',conv+'%','RFQ → order')+tile('Avg. response','9 hr','quote turnaround')+'</div>'+boardHTML();
+    var pipeline=S.rfqs.filter(isOpen).reduce(function(s,r){return s+rfqVal(r);},0);
+    var won=S.rfqs.filter(function(r){return r.stage==='won'||r.stage==='fulfil';});
+    var lost=S.rfqs.filter(function(r){return r.stage==='lost';});
+    var conv=Math.round(won.length/Math.max(1,won.length+lost.length)*100);
+    h.innerHTML='<div class="bbx-tiles">'+tile('Open pipeline',money(pipeline),S.rfqs.filter(isOpen).length+' active')+tile('Won',money(won.reduce(function(s,r){return s+rfqVal(r);},0)),won.length+' orders')+tile('Lost',money(lost.reduce(function(s,r){return s+rfqVal(r);},0)),lost.length+' opportunities')+tile('Win rate',conv+'%','won / decided')+'</div>'+boardHTML();
   },
   quotations:function(h){
     h.innerHTML='<h3 class="bbx-h" style="margin-top:0">Sent quotations</h3>'+(S.quotes.length?tableWrap(['Quote','Customer','From RFQ','Products','Total','Raised'],S.quotes.map(function(q){var t=quoteTotal(q);return '<tr onclick="BB.viewQuote(\''+q.id+'\')" style="cursor:pointer"><td class="mono">'+q.id+'</td><td><b>'+findC(q.cust).name+'</b></td><td class="mono soft">'+q.rfq+'</td><td>'+q.lines.map(function(l){return findP(l.sku).name;}).join(', ')+'</td><td class="num">'+money(t.total)+'</td><td class="soft mono">'+q.created+'</td></tr>';})):'<div class="bbx-card bbx-empty sm">No quotations sent yet — prepare one from the pipeline.</div>');
@@ -532,6 +557,7 @@ var ADMIN_VIEWS={
   },
   reports:function(h){
     h.innerHTML='<div class="bbx-panels2">'+panelBars('Pipeline by category',pipeByCat())+panelReps()+'</div>'+
+      '<div class="bbx-panels2">'+panelHiVal()+panelLost()+'</div>'+
       '<div class="bbx-panels2">'+'<div class="bbx-panel"><h4>Top requested materials</h4>'+topChem()+'</div>'+'<div class="bbx-panel"><h4>Intelligence</h4>'+
         insight('Which customers haven’t ordered in 90 days?','<b>Colcom Foods</b> and <b>PPC Zimbabwe</b> — both historically $40k+/quarter. Suggest a re-engagement call.')+
         insight('Which quotations are most likely to close?','<b>QT-2291 (Harare Water)</b> — repeat buyer, priced in range, 82% predicted win.')+
