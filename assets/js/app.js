@@ -170,26 +170,30 @@ function rmCart(sku){S.cart=S.cart.filter(function(l){return l.sku!==sku;});save
 
 /* ------------------------------------------------ header injection */
 function syncHeaderBadge(){var b=document.getElementById('bbxCartCount');if(b){var n=cartCount();b.textContent=n;b.style.display=n?'inline-grid':'none';}}
+function toolsHTML(){
+  var cart='<a class="bbx-icobtn" href="rfq.html" title="RFQ basket" aria-label="RFQ basket">'+svg(IC.cart,17)+'<span class="bbx-badge" id="bbxCartCount" style="display:none">0</span></a>';
+  if(!SESSION) return cart+'<button class="bbx-signin" onclick="BB.openAuth(\'customer\')">'+svg(IC.lock,15)+' Sign in</button>';
+  var link=SESSION.role==='admin'?['admin.html','Dashboard',IC.board]:['portal.html','My Portal',IC.grid];
+  return cart+'<div class="bbx-profile"><button class="bbx-profile-btn" onclick="BB.toggleProfile(event)" aria-haspopup="true"><span class="bbx-av">'+SESSION.init+'</span><span class="bbx-caret">'+svg('<path d="M6 9l6 6 6-6"/>',13)+'</span></button>'+
+    '<div class="bbx-profile-menu" id="bbxProfileMenu"><div class="bbx-profile-head"><span class="bbx-av">'+SESSION.init+'</span><div class="bbx-profile-id"><b>'+SESSION.name+'</b><small>'+SESSION.sub+'</small></div></div>'+
+    '<a href="'+link[0]+'">'+svg(link[2],16)+'<span>'+link[1]+'</span></a>'+
+    '<a href="index.html">'+svg(IC.site,16)+'<span>Website</span></a>'+
+    '<button onclick="BB.signOut()">'+svg(IC.out,16)+'<span>Sign out</span></button></div></div>';
+}
+function refreshTools(){var w=document.getElementById('bbxHeaderTools');if(w){w.innerHTML=toolsHTML();syncHeaderBadge();}}
 function mountHeader(){
   var page=document.body.getAttribute('data-page')||'';
   var nav=document.getElementById('primaryNav');
   if(nav && !document.getElementById('bbxNavCat')){
     var a=document.createElement('a');a.id='bbxNavCat';a.href='catalogue.html';a.textContent='Catalogue';
     if(page==='catalogue'||page==='rfq')a.setAttribute('aria-current','page');
-    // insert after Products
     var prod=nav.querySelector('a[href="products.html"]');
     if(prod&&prod.nextSibling)nav.insertBefore(a,prod.nextSibling);else nav.appendChild(a);
-    if(SESSION&&SESSION.role==='admin'){var ad=document.createElement('a');ad.href='admin.html';ad.textContent='Dashboard';if(page==='admin')ad.setAttribute('aria-current','page');nav.appendChild(ad);}
-    if(SESSION&&SESSION.role==='customer'){var po=document.createElement('a');po.href='portal.html';po.textContent='My Portal';if(page==='portal')po.setAttribute('aria-current','page');nav.appendChild(po);}
   }
   var actions=document.querySelector('.header-actions');
   if(actions && !document.getElementById('bbxHeaderTools')){
     var wrap=document.createElement('div');wrap.id='bbxHeaderTools';wrap.className='bbx-htools';
-    var cart='<a class="bbx-icobtn" href="rfq.html" title="RFQ basket" aria-label="RFQ basket">'+svg(IC.cart,17)+'<span class="bbx-badge" id="bbxCartCount" style="display:none">0</span></a>';
-    var acct;
-    if(SESSION){acct='<div class="bbx-acct"><span class="bbx-av">'+SESSION.init+'</span><span class="bbx-acct-t"><b>'+SESSION.name+'</b><small>'+SESSION.sub+'</small></span><button class="bbx-icobtn" title="Sign out" onclick="BB.signOut()">'+svg(IC.out,16)+'</button></div>';}
-    else{acct='<a class="bbx-signin" href="signin.html">'+svg(IC.lock,15)+' Sign in</a>';}
-    wrap.innerHTML=cart+acct;
+    wrap.innerHTML=toolsHTML();
     actions.insertBefore(wrap,actions.firstChild);
   }
   syncHeaderBadge();
@@ -214,12 +218,13 @@ var BB={
   addToCart:addToCart,setCartQty:setCartQty,rmCart:rmCart,signOut:signOut,resetDemo:resetDemo,
   toast:toast,closeDrawer:closeDrawer,openProduct:openProduct,openRequestChem:openRequestChem,
   submitRFQ:submitRFQ,submitSourcing:submitSourcing,doSignIn:doSignIn,setAuthSeg:setAuthSeg,
+  openAuth:openAuth,closeAuth:closeAuth,toggleProfile:toggleProfile,
   viewQuote:viewQuote,acceptQuote:acceptQuote,reorder:reorder,openRfqCard:openRfqCard,
   assignRfq:assignRfq,advanceRfq:advanceRfq,buildQuote:buildQuote,recalcQuote:recalcQuote,sendQuote:sendQuote,
   markLost:markLost,pdQty:pdQty
 };
 BB.page=function(page){
-  if(!canSee(page)){location.href='signin.html?next='+encodeURIComponent(page)+(ACCESS[page]==='admin'?'&as=staff':'');return;}
+  if(!canSee(page)){location.href='index.html?auth='+(ACCESS[page]==='admin'?'staff':'customer')+'&next='+encodeURIComponent(page);return;}
   if(page==='admin'||page==='portal'){renderShell(page);return;}
   mountHeader();
   var root=document.getElementById('bbx-root');if(!root)return;
@@ -311,14 +316,17 @@ function openRequestChem(){
 }
 function submitSourcing(){var id=uid('SRC');S.sourcing.unshift({id:id,cust:(SESSION&&SESSION.custId)||'delta',chem:document.getElementById('rcName').value||'Unspecified material',qty:document.getElementById('rcQty').value||'—',app:document.getElementById('rcApp').value||'—',loc:document.getElementById('rcLoc').value||'—'});saveState();closeDrawer();toast(id+' sent — sourcing will respond shortly',IC.check);}
 
-/* ------------------------------------------------ SIGN IN */
-var authSeg='customer';
-function setAuthSeg(s){authSeg=s;renderSignin(document.getElementById('bbx-root'));}
-function renderSignin(root){
-  var params=new URLSearchParams(location.search);
-  if(params.get('as')==='staff'&&!root.getAttribute('data-seg-set')){authSeg='staff';root.setAttribute('data-seg-set','1');}
+/* ------------------------------------------------ SIGN IN (modal) */
+var authSeg='customer', authDest=null;
+function ensureAuthEl(){var a=document.getElementById('bbxAuth');if(!a){a=document.createElement('div');a.id='bbxAuth';a.className='bbx-authmodal';a.addEventListener('click',function(e){if(e.target===a)closeAuth();});a.innerHTML='<div class="bbx-authmodal-card" id="bbxAuthCard" role="dialog" aria-modal="true"></div>';document.body.appendChild(a);}return a;}
+function openAuth(seg,dest){authSeg=(seg==='staff')?'staff':'customer';authDest=dest||null;ensureAuthEl();renderAuthCard();document.getElementById('bbxAuth').classList.add('open');
+  setTimeout(function(){var e=document.getElementById('aiEmail');if(e)e.focus();},60);}
+function closeAuth(){var a=document.getElementById('bbxAuth');if(a)a.classList.remove('open');}
+function setAuthSeg(s){authSeg=s;renderAuthCard();}
+function renderAuthCard(){
   var demo=authSeg==='staff'?ACCOUNTS[0]:ACCOUNTS[2];
-  root.innerHTML='<div class="bbx-authwrap"><div class="bbx-authcard">'+
+  document.getElementById('bbxAuthCard').innerHTML='<button class="bbx-authmodal-x" onclick="BB.closeAuth()" aria-label="Close">'+svg(IC.x,16)+'</button>'+
+    '<div class="bbx-authmodal-brand"><span class="bbx-side-logo">B</span><span class="bbx-side-name" style="color:var(--ink)">Blackbox<small style="color:var(--text-soft)">Investments</small></span></div>'+
     '<div class="bbx-seg"><button class="'+(authSeg==='customer'?'on':'')+'" onclick="BB.setAuthSeg(\'customer\')">'+svg(IC.user,15)+' Customer</button><button class="'+(authSeg==='staff'?'on':'')+'" onclick="BB.setAuthSeg(\'staff\')">'+svg(IC.board,15)+' Staff / Admin</button></div>'+
     '<h2 class="bbx-auth-t">'+(authSeg==='staff'?'Staff & admin sign-in':'Customer portal')+'</h2>'+
     '<p class="bbx-auth-p">'+(authSeg==='staff'?'Access the sales CRM and management dashboards.':'Track your RFQs, quotations and orders.')+'</p>'+
@@ -327,13 +335,19 @@ function renderSignin(root){
     '<label class="bbx-fld"><span>Work email</span><input class="bbx-inp" id="aiEmail" value="'+demo.email+'"></label>'+
     '<label class="bbx-fld"><span>Password</span><input class="bbx-inp" id="aiPw" type="password" value="'+demo.pw+'" onkeydown="if(event.key===\'Enter\')BB.doSignIn()"></label>'+
     '<button class="btn btn--primary btn--block" onclick="BB.doSignIn()">Sign in '+svg(IC.arrow,16)+'</button>'+
-    '<p class="bbx-fine">'+(authSeg==='customer'?'Browse the <a href="catalogue.html">catalogue</a> and submit RFQs as a guest — no account needed.':'For Blackbox staff only.')+'</p>'+
-    '</div></div>';
+    '<p class="bbx-fine">'+(authSeg==='customer'?'Browse the <a href="catalogue.html">catalogue</a> and submit RFQs as a guest — no account needed.':'For Blackbox staff only.')+'</p>';
 }
 function doSignIn(){var acc=signIn(document.getElementById('aiEmail').value.trim(),document.getElementById('aiPw').value);
   if(!acc){document.getElementById('aiErr').style.display='block';return;}
-  var next=new URLSearchParams(location.search).get('next');
-  location.href=(next&&next!=='signin'?next+'.html':(acc.land+'.html'));}
+  closeAuth();
+  if(authDest&&authDest!=='signin'){location.href=authDest+'.html';return;}
+  refreshTools();toast('Signed in — welcome, '+acc.name,IC.check);
+  var p=document.body.getAttribute('data-page');
+  if((p==='admin'||p==='portal')&&canSee(p))BB.page(p);
+}
+function toggleProfile(e){if(e)e.stopPropagation();var m=document.getElementById('bbxProfileMenu');if(m)m.classList.toggle('open');}
+/* legacy signin.html → open the modal on index */
+function renderSignin(root){var params=new URLSearchParams(location.search);location.replace('index.html?auth='+(params.get('as')==='staff'?'staff':'customer')+(params.get('next')?'&next='+params.get('next'):''));}
 
 /* ------------------------------------------------ quotes maths */
 function quoteTotal(q){var sub=q.lines.reduce(function(s,l){return s+findP(l.sku).price*l.qty;},0);var disc=sub*(q.disc||0)/100;var taxable=sub-disc+(q.delivery||0);var vat=taxable*0.15;return {sub:sub,disc:disc,delivery:q.delivery||0,vat:vat,total:taxable+vat};}
@@ -598,7 +612,14 @@ var PORTAL_VIEWS={
 };
 
 /* ------------------------------------------------ boot */
-document.addEventListener('DOMContentLoaded',function(){var p=document.body.getAttribute('data-page');mountHeader();if(p&&(p==='admin'||p==='portal'||document.getElementById('bbx-root')))BB.page(p);});
+document.addEventListener('DOMContentLoaded',function(){
+  var p=document.body.getAttribute('data-page');mountHeader();
+  if(p&&(p==='admin'||p==='portal'||document.getElementById('bbx-root')))BB.page(p);
+  var q=new URLSearchParams(location.search);
+  if(q.get('auth')){setTimeout(function(){openAuth(q.get('auth'),q.get('next'));},60);}
+});
+document.addEventListener('click',function(){var m=document.getElementById('bbxProfileMenu');if(m)m.classList.remove('open');});
+document.addEventListener('keydown',function(e){if(e.key==='Escape'){closeAuth();var m=document.getElementById('bbxProfileMenu');if(m)m.classList.remove('open');}});
 window.addEventListener('hashchange',function(){var p=document.body.getAttribute('data-page');if((p==='admin'||p==='portal')&&document.getElementById('bbx-view'))renderShellView(p,(location.hash||'').replace('#',''));});
 mountHeader();
 })();

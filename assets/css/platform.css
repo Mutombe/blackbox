@@ -42,6 +42,35 @@
 .bbx-acct-t{ line-height:1.25; }
 .bbx-acct-t b{ display:block; font-size:var(--fs-xs); font-weight:700; }
 .bbx-acct-t small{ display:block; font-size:var(--fs-label); color:var(--text-soft); }
+
+/* ---- profile dropdown (authenticated) ---- */
+.bbx-profile{ position:relative; }
+.bbx-profile-btn{ display:flex; align-items:center; gap:6px; background:transparent; border:1px solid var(--line-2); border-radius:100px; padding:5px 11px 5px 5px; cursor:pointer; transition:.16s var(--ease); }
+.site-header:not(.is-stuck):not(.nav-open) .bbx-profile-btn{ border-color:rgba(255,255,255,.35); }
+.bbx-profile-btn:hover{ border-color:var(--accent); }
+.bbx-caret{ display:grid; color:var(--text-soft); }
+.site-header:not(.is-stuck):not(.nav-open) .bbx-caret{ color:#fff; }
+.bbx-profile-menu{ position:absolute; right:0; top:calc(100% + 12px); width:236px; background:#fff; border:1px solid var(--line); border-radius:var(--r-lg); box-shadow:0 26px 54px -22px rgba(30,35,41,.45); padding:8px; opacity:0; visibility:hidden; transform:translateY(-6px); transition:.18s var(--ease); z-index:60; }
+.bbx-profile-menu.open{ opacity:1; visibility:visible; transform:none; }
+.bbx-profile-head{ display:flex; align-items:center; gap:10px; padding:10px 10px 12px; border-bottom:1px solid var(--line); margin-bottom:6px; }
+.bbx-profile-head .bbx-av{ background:var(--ink); color:#fff; }
+.bbx-profile-id{ min-width:0; }
+.bbx-profile-id b{ display:block; font-size:var(--fs-sm); }
+.bbx-profile-id small{ display:block; font-size:var(--fs-label); color:var(--text-soft); overflow:hidden; text-overflow:ellipsis; }
+.bbx-profile-menu a,.bbx-profile-menu button{ display:flex; align-items:center; gap:11px; width:100%; padding:10px 12px; border:0; background:none; color:var(--text-mid); font:inherit; font-size:var(--fs-sm); font-weight:500; border-radius:var(--r-md); cursor:pointer; text-align:left; }
+.bbx-profile-menu a:hover,.bbx-profile-menu button:hover{ background:var(--paper-2); color:var(--ink); }
+.bbx-profile-menu button{ color:#B4451F; }
+.bbx-profile-menu svg{ color:var(--text-soft); }
+.bbx-profile-menu button:hover svg{ color:#B4451F; }
+
+/* ---- auth modal ---- */
+.bbx-authmodal{ position:fixed; inset:0; z-index:110; display:flex; align-items:center; justify-content:center; padding:20px; background:rgba(20,24,28,.6); backdrop-filter:blur(4px); opacity:0; visibility:hidden; transition:.2s; }
+.bbx-authmodal.open{ opacity:1; visibility:visible; }
+.bbx-authmodal-card{ position:relative; width:min(432px,100%); background:#fff; border-radius:var(--r-xl); padding:30px; box-shadow:0 44px 90px -40px rgba(0,0,0,.55); transform:translateY(12px); transition:transform .22s var(--ease); max-height:92vh; overflow-y:auto; }
+.bbx-authmodal.open .bbx-authmodal-card{ transform:none; }
+.bbx-authmodal-x{ position:absolute; top:16px; right:16px; width:34px; height:34px; border-radius:var(--r-md); border:1px solid var(--line-2); background:#fff; color:var(--text-soft); display:grid; place-items:center; cursor:pointer; }
+.bbx-authmodal-x:hover{ color:var(--ink); border-color:var(--ink); }
+.bbx-authmodal-brand{ display:flex; align-items:center; gap:11px; margin-bottom:22px; }
 .site-header:not(.is-stuck):not(.nav-open) .bbx-acct-t b{ color:#fff; }
 .site-header:not(.is-stuck):not(.nav-open) .bbx-acct-t small{ color:var(--on-dark-soft); }
 @media (max-width:900px){ .bbx-acct-t{ display:none; } }
