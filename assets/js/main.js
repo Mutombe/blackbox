@@ -1,5 +1,7 @@
 /* =========================================================
    Blackbox Investments — interactions
+   Shared by every page; each block no-ops where its markup
+   is absent, so index and the detail pages use one file.
    ========================================================= */
 (function () {
   'use strict';
@@ -14,36 +16,41 @@
     header.classList.toggle('is-stuck', window.scrollY > 40);
     ticking = false;
   }
-  window.addEventListener('scroll', function () {
-    if (!ticking) { window.requestAnimationFrame(syncHeader); ticking = true; }
-  }, { passive: true });
-  syncHeader();
+
+  if (header) {
+    window.addEventListener('scroll', function () {
+      if (!ticking) { window.requestAnimationFrame(syncHeader); ticking = true; }
+    }, { passive: true });
+    syncHeader();
+  }
 
   /* ---------- mobile nav ---------- */
   var toggle = document.getElementById('navToggle');
   var nav = document.getElementById('primaryNav');
 
-  function setNav(open) {
-    nav.classList.toggle('is-open', open);
-    header.classList.toggle('nav-open', open);
-    toggle.setAttribute('aria-expanded', String(open));
-    toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  if (toggle && nav && header) {
+    var setNav = function (open) {
+      nav.classList.toggle('is-open', open);
+      header.classList.toggle('nav-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+    };
+
+    toggle.addEventListener('click', function () {
+      setNav(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    nav.addEventListener('click', function (e) {
+      if (e.target.closest('a')) setNav(false);
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setNav(false);
+        toggle.focus();
+      }
+    });
   }
-
-  toggle.addEventListener('click', function () {
-    setNav(toggle.getAttribute('aria-expanded') !== 'true');
-  });
-
-  nav.addEventListener('click', function (e) {
-    if (e.target.closest('a')) setNav(false);
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
-      setNav(false);
-      toggle.focus();
-    }
-  });
 
   /* ---------- scroll reveal ---------- */
   var revealables = document.querySelectorAll('.reveal');
@@ -67,92 +74,56 @@
     revealables.forEach(function (el) { io.observe(el); });
   }
 
-  /* ---------- industries image swap ---------- */
-  var indButtons = document.querySelectorAll('.ind-item');
-  var indImage = document.getElementById('industryImage');
-
-  indButtons.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      if (btn.classList.contains('is-active')) return;
-
-      indButtons.forEach(function (b) { b.classList.remove('is-active'); });
-      btn.classList.add('is-active');
-
-      var src = btn.getAttribute('data-img');
-      var alt = btn.getAttribute('data-alt') || '';
-
-      if (reduceMotion) {
-        indImage.src = src;
-        indImage.alt = alt;
-        return;
-      }
-
-      var next = new Image();
-      next.onload = function () {
-        indImage.src = src;
-        indImage.alt = alt;
-        indImage.classList.remove('is-swapping');
-      };
-      next.onerror = function () { indImage.classList.remove('is-swapping'); };
-      indImage.classList.add('is-swapping');
-      next.src = src;
-    });
-  });
-
-  /* ---------- preload industry images ---------- */
-  indButtons.forEach(function (btn) {
-    var src = btn.getAttribute('data-img');
-    if (src) { var im = new Image(); im.src = src; }
-  });
-
-  /* ---------- contact form ---------- */
+  /* ---------- contact form (contact.html only) ---------- */
   var form = document.getElementById('contactForm');
   var note = document.getElementById('formNote');
 
-  function fail(field, message) {
-    field.setAttribute('aria-invalid', 'true');
-    note.textContent = message;
-    note.className = 'form-note is-err';
-    field.focus();
-    return false;
+  if (form && note) {
+    var fail = function (field, message) {
+      field.setAttribute('aria-invalid', 'true');
+      note.textContent = message;
+      note.className = 'form-note is-err';
+      field.focus();
+      return false;
+    };
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      var name = form.elements.name;
+      var email = form.elements.email;
+      var message = form.elements.message;
+
+      [name, email, message].forEach(function (f) { f.removeAttribute('aria-invalid'); });
+
+      if (!name.value.trim()) return fail(name, 'Please tell us your name.');
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
+        return fail(email, 'Please enter a valid email address.');
+      }
+      if (message.value.trim().length < 10) {
+        return fail(message, 'Please add a little more detail about what you need.');
+      }
+
+      /* No backend is wired up yet — hand the enquiry to the visitor's mail
+         client so nothing is silently dropped. Replace this block with a POST
+         to your form endpoint (Formspree, Netlify Forms, your own API, …). */
+      var subject = 'Supply enquiry — ' + (form.elements.company.value.trim() || name.value.trim());
+      var body =
+        'Name: ' + name.value.trim() + '\n' +
+        'Company: ' + (form.elements.company.value.trim() || '—') + '\n' +
+        'Email: ' + email.value.trim() + '\n' +
+        'Phone: ' + (form.elements.phone.value.trim() || '—') + '\n\n' +
+        message.value.trim();
+
+      window.location.href =
+        'mailto:sales@blackboxinvestments.co.zw' +
+        '?subject=' + encodeURIComponent(subject) +
+        '&body=' + encodeURIComponent(body);
+
+      note.textContent = 'Opening your email app to send the enquiry…';
+      note.className = 'form-note is-ok';
+    });
   }
-
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
-
-    var name = form.elements.name;
-    var email = form.elements.email;
-    var message = form.elements.message;
-
-    [name, email, message].forEach(function (f) { f.removeAttribute('aria-invalid'); });
-
-    if (!name.value.trim()) return fail(name, 'Please tell us your name.');
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.value.trim())) {
-      return fail(email, 'Please enter a valid email address.');
-    }
-    if (message.value.trim().length < 10) {
-      return fail(message, 'Please add a little more detail about what you need.');
-    }
-
-    /* No backend is wired up yet — hand the enquiry to the user's mail client
-       so nothing is silently dropped. Replace this block with a POST to your
-       form endpoint (Formspree, Netlify Forms, your own API, …) when ready. */
-    var subject = 'Supply enquiry — ' + (form.elements.company.value.trim() || name.value.trim());
-    var body =
-      'Name: ' + name.value.trim() + '\n' +
-      'Company: ' + (form.elements.company.value.trim() || '—') + '\n' +
-      'Email: ' + email.value.trim() + '\n' +
-      'Phone: ' + (form.elements.phone.value.trim() || '—') + '\n\n' +
-      message.value.trim();
-
-    window.location.href =
-      'mailto:sales@blackboxinvestments.co.zw' +
-      '?subject=' + encodeURIComponent(subject) +
-      '&body=' + encodeURIComponent(body);
-
-    note.textContent = 'Opening your email app to send the enquiry…';
-    note.className = 'form-note is-ok';
-  });
 
   /* ---------- footer year ---------- */
   var year = document.getElementById('year');
