@@ -11,6 +11,8 @@
 <meta property="og:description" content="Since 2014, Blackbox Investments has supplied industrial chemicals and raw materials to manufacturing companies across Zimbabwe.">
 <meta property="og:image" content="assets/img/hero-refinery.jpg">
 <link rel="icon" href="assets/img/logo.png">
+<link rel="preload" href="assets/fonts/grift-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/grift-800.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
@@ -110,21 +112,30 @@
 
     <div class="core-features">
       <article class="core-feature reveal">
-        <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+        <div class="core-feature-top">
+          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 6v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10V6l-8-4Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+          <span class="core-feature-no">01</span>
+        </div>
         <h3>Reliability</h3>
         <p>A dependable, repeatable supply of raw materials so your production
            schedule holds. We plan stock around your run rates, not ours.</p>
       </article>
 
       <article class="core-feature reveal" data-delay="1">
-        <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.3 5.5.8-4 4 .9 5.7L12 16.1 7.1 18.8 8 13.1l-4-4 5.5-.8L12 3Z"/></svg></span>
+        <div class="core-feature-top">
+          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.5 5.3 5.5.8-4 4 .9 5.7L12 16.1 7.1 18.8 8 13.1l-4-4 5.5-.8L12 3Z"/></svg></span>
+          <span class="core-feature-no">02</span>
+        </div>
         <h3>Quality</h3>
         <p>We supply and transport to strict industry standards, with
            documentation and specification sheets on every consignment.</p>
       </article>
 
       <article class="core-feature reveal" data-delay="2">
-        <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7a1 1 0 0 1 1-1h9v11H3Z"/><path d="M13 10h4l4 4v3h-8v-7Z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span>
+        <div class="core-feature-top">
+          <span class="feature-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17V7a1 1 0 0 1 1-1h9v11H3Z"/><path d="M13 10h4l4 4v3h-8v-7Z"/><circle cx="7" cy="18" r="2"/><circle cx="17" cy="18" r="2"/></svg></span>
+          <span class="core-feature-no">03</span>
+        </div>
         <h3>Momentum</h3>
         <p>A vibrant, motivated commercial team built on aggressive sales and
            marketing &mdash; the reason our customer base keeps expanding.</p>
@@ -419,12 +430,18 @@
 </main>
 
 <footer class="site-footer">
+  <div class="pattern pattern--dots" aria-hidden="true"></div>
   <div class="shell">
     <div class="footer-top">
       <div class="footer-brand">
         <img src="assets/img/logo-white.png" alt="Blackbox Investments">
         <p>Supplying the raw materials that keep Zimbabwe&rsquo;s manufacturers
-           producing. Trading since 2014.</p>
+           producing &mdash; sourced globally, stocked locally, delivered on the day
+           we said.</p>
+        <ul class="footer-meta" role="list">
+          <li><span>Established</span><strong>2014</strong></li>
+          <li><span>Based in</span><strong>Harare, ZW</strong></li>
+        </ul>
       </div>
 
       <nav class="footer-nav" aria-label="Footer">
@@ -442,16 +459,21 @@
         </div>
         <div>
           <h4>Contact</h4>
-          <a href="mailto:sales@blackboxinvestments.co.zw">Email us</a>
-          <a href="tel:+263000000000">+263 00 000 0000</a>
-          <span>Harare, Zimbabwe</span>
+          <a class="footer-contact" href="mailto:sales@blackboxinvestments.co.zw">sales@blackboxinvestments.co.zw</a>
+          <a class="footer-contact footer-contact--lg" href="tel:+263000000000">+263 00 000 0000</a>
+          <span>Mon &ndash; Fri, 08:00 &ndash; 17:00 CAT</span>
         </div>
       </nav>
     </div>
 
+    <div class="footer-wordmark" aria-hidden="true">BLACKBOX</div>
+
     <div class="footer-bottom">
       <p>&copy; <span id="year">2026</span> Blackbox Investments. All rights reserved.</p>
-      <p>Harare &middot; Zimbabwe</p>
+      <ul class="footer-legal" role="list">
+        <li>Harare &middot; Zimbabwe</li>
+        <li>Trading since 2014</li>
+      </ul>
     </div>
   </div>
 </footer>

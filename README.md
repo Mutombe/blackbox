@@ -55,8 +55,24 @@ Corners are deliberately tight across the whole system, buttons included. If you
 ever want the pill buttons back, it is one line — set `border-radius:100px` on
 `.btn`.
 
-Typeface is **Plus Jakarta Sans** (Google Fonts), matching the geometric
-grotesque in the supplied Framer / Synthorix references.
+Two typefaces, split by job:
+
+- **Grift** (geometric, self-hosted in `assets/fonts/`) carries every title,
+  display line and display numeral.
+- **Plus Jakarta Sans** (Google Fonts) carries body and UI text.
+
+Five Grift weights are served as woff2 (500/600/700/800/900, ~24KB each). Grift's
+cap height is 65.8% against Plus Jakarta's ~70%, so it reads about 6% small at the
+same size — corrected with `size-adjust:106%` in the `@font-face` rules rather
+than by distorting the type scale. The 700 and 800 weights are `<link rel=preload>`ed
+because they appear above the fold.
+
+> **Licence — action needed before launch.** The Grift files came from
+> `ifonts.xyz` with `iFonts-License.txt` reading *"License: Demo for Personal
+> Use"*. That does not cover a commercial company website. Buy a commercial
+> licence from the foundry before this goes live, or swap the display face.
+> Everything is tokenised, so switching is a change to `--font-display` plus the
+> `@font-face` block.
 
 ### Type scale
 
@@ -102,10 +118,29 @@ Add one as `<div class="pattern pattern--grid" aria-hidden="true">` inside a
 | `.pattern--dots` | 30px dot matrix, light-on-dark | products |
 | `.pattern--rules` | six evenly spaced column rules | statement, process, detail rows |
 | `.pattern--hatch` | 45° diagonal hatch, corner-masked | CTA bands |
+| `.pattern--dots` | also carries the footer |
 
 Ink is `--pat-light` / `--pat-dark` (7% alpha) — deliberately at the edge of
 perception. If a pattern reads as wallpaper rather than texture, lower the alpha
 rather than removing it.
+
+### Photography treatment
+
+Photographs are shown **warm and visible** rather than buried under a flat dark
+overlay. Each photo section layers three things:
+
+1. a warm tint (`rgba(64,36,14,…)`) so the image reads golden, not grey;
+2. a **shaped scrim** — a radial anchored on the text column that falls away to
+   fully transparent by ~85%, leaving most of the frame open;
+3. a light floor gradient so the lower edge stays solid.
+
+The images also take `saturate(1.14) contrast(1.03)`.
+
+Because the scrim is shaped rather than global, contrast has to be *measured*,
+not assumed. All 14 text groups set over photography were checked against the
+brightest 5% of their true backdrop pixels and pass WCAG AA (4.5:1 body,
+3:1 large). If you re-crop or replace a photo, re-check — a bright sky landing
+under a headline is exactly what this treatment risks.
 
 ### Hero
 
@@ -148,5 +183,7 @@ Verified at 17 viewport sizes from 1920×1080 down to 360×640.
 - Verified headless across all seven pages at 1440px and 390px: no console
   errors, no broken internal links, no missing images, no horizontal overflow.
 - Hero one-screen fit verified at 17 viewport sizes (1920×1080 → 360×640).
+- Text-over-photo contrast measured from rendered pixels: 14/14 text groups pass
+  WCAG AA against the brightest 5% of their backdrop.
 - Images are full-resolution 2048px JPEGs. Compress and generate `srcset`
   variants when you swap in the licensed originals.
